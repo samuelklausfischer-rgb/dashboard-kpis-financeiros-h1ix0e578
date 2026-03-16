@@ -1,9 +1,12 @@
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { DateRangePicker } from './date-range-picker'
-import { Bell } from 'lucide-react'
-import { Button } from './ui/button'
+import { DateRangePicker } from '@/components/date-range-picker'
+import { Bell, LogOut } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function Header() {
+  const { logout } = useAuth()
+
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 shadow-sm">
       <div className="flex items-center gap-4">
@@ -25,6 +28,16 @@ export function Header() {
         >
           <Bell className="h-5 w-5" />
           <span className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white"></span>
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={logout}
+          className="text-slate-600 hover:text-rose-600 hover:bg-rose-50 border-slate-200 ml-1 hidden sm:flex"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Sair
         </Button>
       </div>
     </header>

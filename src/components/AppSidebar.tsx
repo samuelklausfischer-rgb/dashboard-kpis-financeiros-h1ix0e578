@@ -1,4 +1,4 @@
-import { BarChart3, Settings, User, PieChart, Wallet, LogOut, Building } from 'lucide-react'
+import { BarChart3, Settings, PieChart, Wallet, LogOut, Building } from 'lucide-react'
 
 import {
   Sidebar,
@@ -12,7 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useAuth } from '@/contexts/AuthContext'
 
 const items = [
   {
@@ -39,6 +40,8 @@ const items = [
 ]
 
 export function AppSidebar() {
+  const { logout } = useAuth()
+
   return (
     <Sidebar className="border-r border-slate-200">
       <SidebarHeader className="p-4">
@@ -101,13 +104,11 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              asChild
-              className="text-slate-500 hover:text-red-600 hover:bg-red-50 mt-2"
+              onClick={logout}
+              className="text-slate-500 hover:text-red-600 hover:bg-red-50 mt-2 cursor-pointer"
             >
-              <a href="#">
-                <LogOut className="h-4 w-4" />
-                <span>Sair da conta</span>
-              </a>
+              <LogOut className="h-4 w-4" />
+              <span>Sair da conta</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
