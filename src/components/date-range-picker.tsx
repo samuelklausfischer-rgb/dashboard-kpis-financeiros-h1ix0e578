@@ -1,19 +1,16 @@
 import * as React from 'react'
-import { format, subDays } from 'date-fns'
+import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Calendar as CalendarIcon } from 'lucide-react'
-import { DateRange } from 'react-day-picker'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { useDateRange } from '@/contexts/DateRangeContext'
 
 export function DateRangePicker({ className }: React.HTMLAttributes<HTMLDivElement>) {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  })
+  const { dateRange, setDateRange } = useDateRange()
 
   return (
     <div className={cn('grid gap-2', className)}>
@@ -24,18 +21,18 @@ export function DateRangePicker({ className }: React.HTMLAttributes<HTMLDivEleme
             variant={'outline'}
             className={cn(
               'w-[260px] justify-start text-left font-normal border-slate-200 shadow-subtle hover:bg-slate-50 text-slate-700',
-              !date && 'text-muted-foreground',
+              !dateRange && 'text-muted-foreground',
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4 text-slate-500" />
-            {date?.from ? (
-              date.to ? (
+            {dateRange?.from ? (
+              dateRange.to ? (
                 <>
-                  {format(date.from, "dd 'de' MMM, yyyy", { locale: ptBR })} -{' '}
-                  {format(date.to, "dd 'de' MMM, yyyy", { locale: ptBR })}
+                  {format(dateRange.from, "dd 'de' MMM, yyyy", { locale: ptBR })} -{' '}
+                  {format(dateRange.to, "dd 'de' MMM, yyyy", { locale: ptBR })}
                 </>
               ) : (
-                format(date.from, "dd 'de' MMM, yyyy", { locale: ptBR })
+                format(dateRange.from, "dd 'de' MMM, yyyy", { locale: ptBR })
               )
             ) : (
               <span>Selecione um período</span>
@@ -46,9 +43,9 @@ export function DateRangePicker({ className }: React.HTMLAttributes<HTMLDivEleme
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={setDate}
+            defaultMonth={dateRange?.from}
+            selected={dateRange}
+            onSelect={setDateRange}
             numberOfMonths={2}
             locale={ptBR}
           />

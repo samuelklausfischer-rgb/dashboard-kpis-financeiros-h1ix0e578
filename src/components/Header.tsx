@@ -2,10 +2,10 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { DateRangePicker } from '@/components/date-range-picker'
 import { Bell, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 
 export function Header() {
-  const { logout } = useAuth()
+  const { signOut } = useAuth()
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 shadow-sm">
@@ -33,7 +33,7 @@ export function Header() {
         <Button
           variant="outline"
           size="sm"
-          onClick={logout}
+          onClick={signOut}
           className="text-slate-600 hover:text-rose-600 hover:bg-rose-50 border-slate-200 ml-1 hidden sm:flex"
         >
           <LogOut className="h-4 w-4 mr-2" />

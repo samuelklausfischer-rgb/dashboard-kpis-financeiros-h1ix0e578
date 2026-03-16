@@ -6,25 +6,28 @@ import Index from '@/pages/Index'
 import NotFound from '@/pages/NotFound'
 import Layout from '@/components/Layout'
 import Login from '@/pages/Login'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/hooks/use-auth'
+import { DateRangeProvider } from '@/contexts/DateRangeContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 const App = () => (
   <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
     <AuthProvider>
-      <TooltipProvider delayDuration={300}>
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Index />} />
+      <DateRangeProvider>
+        <TooltipProvider delayDuration={300}>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Index />} />
+              </Route>
             </Route>
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </DateRangeProvider>
     </AuthProvider>
   </BrowserRouter>
 )

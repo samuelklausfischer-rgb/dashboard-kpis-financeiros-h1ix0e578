@@ -12,7 +12,7 @@ import { ArrowDownRight, ArrowUpRight, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
-import { KpiData } from '@/data/mock'
+import { KpiData } from '@/types/dashboard'
 import { cn } from '@/lib/utils'
 
 interface KpiCardProps {
@@ -38,7 +38,7 @@ const formatValue = (value: number, format: 'currency' | 'percent' | 'number') =
 export function KpiCard({ data, delay = 0 }: KpiCardProps) {
   const { title, description, value, format, variation, invertedLogic, data: chartData } = data
 
-  const isPositiveVariation = variation > 0
+  const isPositiveVariation = variation >= 0
   const isGood = invertedLogic ? !isPositiveVariation : isPositiveVariation
 
   const trendColor = isGood ? 'text-emerald-500' : 'text-rose-500'
@@ -94,7 +94,7 @@ export function KpiCard({ data, delay = 0 }: KpiCardProps) {
               <TrendIcon className="h-3.5 w-3.5 mr-1" strokeWidth={2.5} />
               {Math.abs(variation).toFixed(1)}%
             </span>
-            <span className="text-slate-500 ml-2 font-normal">vs. mês anterior</span>
+            <span className="text-slate-500 ml-2 font-normal">vs. período anterior</span>
           </div>
         </div>
 

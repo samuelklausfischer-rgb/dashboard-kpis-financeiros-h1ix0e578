@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { Building, Lock } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 import {
   Card,
   CardContent,
@@ -15,18 +16,35 @@ import {
 } from '@/components/ui/card'
 
 export default function Login() {
-  const { isAuthenticated, login } = useAuth()
+  const { user, signIn } = useAuth()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const { toast } = useToast()
 
-  if (isAuthenticated) {
+  const [email, setEmail] = useState('admin@example.com')
+  const [password, setPassword] = useState('Admin123!')
+  const [isLoading, setIsLoading] = useState(false)
+
+  if (user) {
     return <Navigate to="/" replace />
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    login()
+    setIsLoading(true)
+
+    const { error } = await signIn(email, password)
+
+    setIsLoading(false)
+
+    if (error) {
+      toast({
+        title: 'Erro no login',
+        description: error.message || 'Verifique suas credenciais e tente novamente.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     navigate('/', { replace: true })
   }
 
@@ -60,6 +78,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="focus-visible:ring-blue-600"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2 text-left">
@@ -75,17 +94,20 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="focus-visible:ring-blue-600"
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4">
-              <Lock className="mr-2 h-4 w-4" /> Entrar
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4"
+              disabled={isLoading}
+            >
+              <Lock className="mr-2 h-4 w-4" /> {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center border-t border-slate-100 pt-6">
-          <p className="text-sm text-slate-500">
-            Qualquer email e senha funcionarão neste ambiente de teste.
-          </p>
+          <p className="text-sm text-slate-500">Use admin@example.com / Admin123!</p>
         </CardFooter>
       </Card>
     </div>
