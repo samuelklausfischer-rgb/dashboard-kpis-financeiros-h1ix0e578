@@ -4,9 +4,11 @@ import { UnidadePerformance } from '@/types/unidades'
 import { KpiData, DataPoint } from '@/types/dashboard'
 
 export async function fetchUnidadesPerformance(
-  date: Date = new Date(),
+  startDate: Date,
+  endDate: Date,
 ): Promise<UnidadePerformance[]> {
-  const dateStr = format(date, 'yyyy-MM-dd')
+  const startDateStr = format(startDate, 'yyyy-MM-dd')
+  const endDateStr = format(endDate, 'yyyy-MM-dd')
 
   // Fetch all active units
   const { data: unidades, error: unError } = await supabase
@@ -20,19 +22,42 @@ export async function fetchUnidadesPerformance(
     return []
   }
 
-  // Fetch KPIs for the given date
+  // Fetch KPIs for the given period
   const { data: kpis, error: kpiError } = await supabase
     .from('kpis_diarios')
     .select('*')
-    .eq('data', dateStr)
+    .gte('data', startDateStr)
+    .lte('data', endDateStr)
 
   if (kpiError) {
     console.error('Error fetching KPIs:', kpiError)
     return []
   }
 
-  // Map KPIs to units efficiently
-  const kpiMap = new Map(kpis.map((k) => [k.unidade_id, k]))
+  // Map and aggregate KPIs to units
+  const kpiMap = new Map<string, any>()
+  for (const k of kpis || []) {
+    if (!k.unidade_id) continue
+    const existing = kpiMap.get(k.unidade_id) || {
+      faturamento_bruto: 0,
+      custos_totais: 0,
+      despesas_totais: 0,
+      margem_contribuicao: 0,
+      resultado_financeiro: 0,
+      ebitda: 0,
+      count: 0,
+    }
+
+    existing.faturamento_bruto += Number(k.faturamento_bruto || 0)
+    existing.custos_totais += Number(k.custos_totais || 0)
+    existing.despesas_totais += Number(k.despesas_totais || 0)
+    existing.margem_contribuicao += Number(k.margem_contribuicao || 0)
+    existing.resultado_financeiro += Number(k.resultado_financeiro || 0)
+    existing.ebitda += Number(k.ebitda || 0)
+    existing.count += 1
+
+    kpiMap.set(k.unidade_id, existing)
+  }
 
   return unidades.map((u) => {
     const kpi = kpiMap.get(u.id)
@@ -40,16 +65,17 @@ export async function fetchUnidadesPerformance(
       id: u.id,
       nome: u.nome,
       tipo: u.tipo as 'matriz' | 'filial',
-      kpis: kpi
-        ? {
-            faturamento_bruto: Number(kpi.faturamento_bruto),
-            custos_totais: Number(kpi.custos_totais),
-            despesas_totais: Number(kpi.despesas_totais),
-            margem_contribuicao: Number(kpi.margem_contribuicao),
-            resultado_financeiro: Number(kpi.resultado_financeiro),
-            ebitda: Number(kpi.ebitda),
-          }
-        : null,
+      kpis:
+        kpi && kpi.count > 0
+          ? {
+              faturamento_bruto: kpi.faturamento_bruto,
+              custos_totais: kpi.custos_totais,
+              despesas_totais: kpi.despesas_totais,
+              margem_contribuicao: kpi.margem_contribuicao,
+              resultado_financeiro: kpi.resultado_financeiro,
+              ebitda: kpi.ebitda,
+            }
+          : null,
     }
   })
 }

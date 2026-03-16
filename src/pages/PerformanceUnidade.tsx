@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Building2 } from 'lucide-react'
 import { fetchUnidadesPerformance } from '@/services/unidades'
 import { UnidadePerformance } from '@/types/unidades'
+import { useDateRange } from '@/contexts/DateRangeContext'
 import {
   Table,
   TableBody,
@@ -23,6 +24,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
 
 export default function PerformanceUnidade() {
+  const { dateRange } = useDateRange()
   const [data, setData] = useState<UnidadePerformance[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -32,8 +34,12 @@ export default function PerformanceUnidade() {
   useEffect(() => {
     let mounted = true
     async function loadData() {
+      if (!dateRange?.from || !dateRange?.to) {
+        if (mounted) setData([])
+        return
+      }
       setLoading(true)
-      const result = await fetchUnidadesPerformance(new Date())
+      const result = await fetchUnidadesPerformance(dateRange.from, dateRange.to)
       if (mounted) {
         setData(result)
         setLoading(false)
@@ -43,7 +49,7 @@ export default function PerformanceUnidade() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [dateRange])
 
   const filteredData = useMemo(() => {
     return data.filter((u) => {
@@ -131,7 +137,8 @@ export default function PerformanceUnidade() {
                     <Building2 className="h-10 w-10 mb-3 text-slate-300" />
                     <p className="text-lg font-medium text-slate-900">Nenhuma unidade encontrada</p>
                     <p className="text-sm">
-                      Tente ajustar os filtros de busca para encontrar o que procura.
+                      Tente ajustar os filtros de busca para encontrar o que procura ou altere o
+                      período no filtro de data.
                     </p>
                   </div>
                 </TableCell>
