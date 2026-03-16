@@ -1,147 +1,147 @@
 import { supabase } from '@/lib/supabase/client'
 import { KpiData, DataPoint } from '@/types/dashboard'
+import { format, subDays } from 'date-fns'
 
-export async function fetchDashboardData(startDate: Date, endDate: Date): Promise<KpiData[]> {
-  const durationInDays = Math.max(
-    1,
-    Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
-  )
+export async function fetchDashboardData(
+  targetDate: Date = new Date(),
+): Promise<{ kpis: KpiData[]; hasTodayData: boolean }> {
+  const targetDateStr = format(targetDate, 'yyyy-MM-dd')
+  const prevDateStr = format(subDays(targetDate, 1), 'yyyy-MM-dd')
+  const startDateStr = format(subDays(targetDate, 30), 'yyyy-MM-dd')
 
-  const prevEndDate = new Date(startDate)
-  prevEndDate.setDate(prevEndDate.getDate() - 1)
+  const { data, error } = await supabase
+    .from('kpis_diarios')
+    .select('*')
+    .gte('data', startDateStr)
+    .lte('data', targetDateStr)
+    .order('data', { ascending: true })
 
-  const prevStartDate = new Date(prevEndDate)
-  prevStartDate.setDate(prevStartDate.getDate() - durationInDays + 1)
+  if (error) {
+    console.error('Error fetching KPIs:', error)
+    return { kpis: [], hasTodayData: false }
+  }
 
-  const [currentResponse, prevResponse] = await Promise.all([
-    supabase
-      .from('kpis_diarios' as any)
-      .select('*')
-      .gte('data', startDate.toISOString().split('T')[0])
-      .lte('data', endDate.toISOString().split('T')[0])
-      .order('data', { ascending: true }),
-    supabase
-      .from('kpis_diarios' as any)
-      .select('*')
-      .gte('data', prevStartDate.toISOString().split('T')[0])
-      .lte('data', prevEndDate.toISOString().split('T')[0]),
-  ])
+  const records = data || []
 
-  const currentData = currentResponse.data || []
-  const prevData = prevResponse.data || []
+  // Check if we have records for today
+  const todayRecords = records.filter((r) => r.data === targetDateStr)
+  const hasTodayData = todayRecords.length > 0
 
-  const aggregate = (data: any[], key: string) =>
-    data.reduce((sum, row) => sum + Number(row[key] || 0), 0)
+  // Group by date for the charts (Macro view - sum across all units)
+  const groupedByDate: Record<string, any> = {}
+  records.forEach((r) => {
+    if (!groupedByDate[r.data]) {
+      groupedByDate[r.data] = {
+        faturamento_bruto: 0,
+        custos_totais: 0,
+        despesas_totais: 0,
+        margem_contribuicao: 0,
+        resultado_financeiro: 0,
+        ebitda: 0,
+      }
+    }
+    groupedByDate[r.data].faturamento_bruto += Number(r.faturamento_bruto || 0)
+    groupedByDate[r.data].custos_totais += Number(r.custos_totais || 0)
+    groupedByDate[r.data].despesas_totais += Number(r.despesas_totais || 0)
+    groupedByDate[r.data].margem_contribuicao += Number(r.margem_contribuicao || 0)
+    groupedByDate[r.data].resultado_financeiro += Number(r.resultado_financeiro || 0)
+    groupedByDate[r.data].ebitda += Number(r.ebitda || 0)
+  })
 
-  const buildDaily = (data: any[], key: string, start: Date, end: Date): DataPoint[] => {
-    const grouped = data.reduce(
-      (acc, row) => {
-        const dateStr = row.data
-        acc[dateStr] = (acc[dateStr] || 0) + Number(row[key] || 0)
-        return acc
-      },
-      {} as Record<string, number>,
-    )
+  const todayAgg = groupedByDate[targetDateStr] || {
+    faturamento_bruto: 0,
+    custos_totais: 0,
+    despesas_totais: 0,
+    margem_contribuicao: 0,
+    resultado_financeiro: 0,
+    ebitda: 0,
+  }
 
+  const prevAgg = groupedByDate[prevDateStr] || {
+    faturamento_bruto: 0,
+    custos_totais: 0,
+    despesas_totais: 0,
+    margem_contribuicao: 0,
+    resultado_financeiro: 0,
+    ebitda: 0,
+  }
+
+  const buildDaily = (key: string): DataPoint[] => {
     const result: DataPoint[] = []
-
-    // Create a new date and strip time to avoid DST issues when adding days
-    const current = new Date(start.getTime())
-    current.setHours(12, 0, 0, 0)
-    const endLimit = new Date(end.getTime())
-    endLimit.setHours(12, 0, 0, 0)
-
-    while (current <= endLimit) {
-      const dateStr = current.toISOString().split('T')[0]
+    for (let i = 30; i >= 0; i--) {
+      const d = format(subDays(targetDate, i), 'yyyy-MM-dd')
       result.push({
-        date: dateStr,
-        value: grouped[dateStr] || 0,
+        date: d,
+        value: groupedByDate[d]?.[key] || 0,
       })
-      current.setDate(current.getDate() + 1)
     }
     return result
   }
 
-  const calculateVariation = (current: number, prev: number) => {
-    if (prev === 0) return current > 0 ? 100 : 0
-    return ((current - prev) / prev) * 100
+  const calcVar = (curr: number, prev: number): number | null => {
+    if (!prev || prev === 0) return null
+    return ((curr - prev) / Math.abs(prev)) * 100
   }
 
-  return [
+  const kpis: KpiData[] = [
     {
       id: 'faturamento',
       title: 'Faturamento Bruto',
       description: 'Receita total antes de deduções, impostos ou custos.',
-      value: aggregate(currentData, 'faturamento_bruto'),
+      value: todayAgg.faturamento_bruto,
       format: 'currency',
-      variation: calculateVariation(
-        aggregate(currentData, 'faturamento_bruto'),
-        aggregate(prevData, 'faturamento_bruto'),
-      ),
-      data: buildDaily(currentData, 'faturamento_bruto', startDate, endDate),
+      variation: calcVar(todayAgg.faturamento_bruto, prevAgg.faturamento_bruto),
+      data: buildDaily('faturamento_bruto'),
     },
     {
       id: 'custos',
       title: 'Custos Totais',
       description: 'Custos variáveis diretos atrelados à produção ou prestação de serviços.',
-      value: aggregate(currentData, 'custos_totais'),
+      value: todayAgg.custos_totais,
       format: 'currency',
-      variation: calculateVariation(
-        aggregate(currentData, 'custos_totais'),
-        aggregate(prevData, 'custos_totais'),
-      ),
+      variation: calcVar(todayAgg.custos_totais, prevAgg.custos_totais),
       invertedLogic: true,
-      data: buildDaily(currentData, 'custos_totais', startDate, endDate),
+      data: buildDaily('custos_totais'),
     },
     {
       id: 'despesas',
       title: 'Despesas Totais',
       description: 'Despesas operacionais fixas (administrativas, vendas, etc).',
-      value: aggregate(currentData, 'despesas_totais'),
+      value: todayAgg.despesas_totais,
       format: 'currency',
-      variation: calculateVariation(
-        aggregate(currentData, 'despesas_totais'),
-        aggregate(prevData, 'despesas_totais'),
-      ),
+      variation: calcVar(todayAgg.despesas_totais, prevAgg.despesas_totais),
       invertedLogic: true,
-      data: buildDaily(currentData, 'despesas_totais', startDate, endDate),
+      data: buildDaily('despesas_totais'),
     },
     {
       id: 'margem',
       title: 'Margem de Contribuição',
       description: 'Lucro bruto menos custos variáveis. Essencial para cobrir despesas fixas.',
-      value: aggregate(currentData, 'margem_contribuicao'),
+      value: todayAgg.margem_contribuicao,
       format: 'currency',
-      variation: calculateVariation(
-        aggregate(currentData, 'margem_contribuicao'),
-        aggregate(prevData, 'margem_contribuicao'),
-      ),
-      data: buildDaily(currentData, 'margem_contribuicao', startDate, endDate),
+      variation: calcVar(todayAgg.margem_contribuicao, prevAgg.margem_contribuicao),
+      data: buildDaily('margem_contribuicao'),
     },
     {
       id: 'resultado',
       title: 'Resultado Financeiro',
       description: 'Saldo líquido de receitas e despesas financeiras (juros, rendimentos).',
-      value: aggregate(currentData, 'resultado_financeiro'),
+      value: todayAgg.resultado_financeiro,
       format: 'currency',
-      variation: calculateVariation(
-        aggregate(currentData, 'resultado_financeiro'),
-        aggregate(prevData, 'resultado_financeiro'),
-      ),
-      data: buildDaily(currentData, 'resultado_financeiro', startDate, endDate),
+      variation: calcVar(todayAgg.resultado_financeiro, prevAgg.resultado_financeiro),
+      data: buildDaily('resultado_financeiro'),
     },
     {
       id: 'ebitda',
       title: 'EBITDA',
       description:
         'Lucro antes de juros, impostos, depreciação e amortização. Indica o potencial de geração de caixa.',
-      value: aggregate(currentData, 'ebitda'),
+      value: todayAgg.ebitda,
       format: 'currency',
-      variation: calculateVariation(
-        aggregate(currentData, 'ebitda'),
-        aggregate(prevData, 'ebitda'),
-      ),
-      data: buildDaily(currentData, 'ebitda', startDate, endDate),
+      variation: calcVar(todayAgg.ebitda, prevAgg.ebitda),
+      data: buildDaily('ebitda'),
     },
   ]
+
+  return { kpis, hasTodayData }
 }

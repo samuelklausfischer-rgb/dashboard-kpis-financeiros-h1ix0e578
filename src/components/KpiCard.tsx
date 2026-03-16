@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { ArrowDownRight, ArrowUpRight, Info } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Info, Minus } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -38,11 +38,24 @@ const formatValue = (value: number, format: 'currency' | 'percent' | 'number') =
 export function KpiCard({ data, delay = 0 }: KpiCardProps) {
   const { title, description, value, format, variation, invertedLogic, data: chartData } = data
 
-  const isPositiveVariation = variation >= 0
-  const isGood = invertedLogic ? !isPositiveVariation : isPositiveVariation
+  const hasVariation = variation !== null
+  const isPositiveVariation = hasVariation && variation > 0
+  const isNeutral = hasVariation && variation === 0
 
-  const trendColor = isGood ? 'text-emerald-500' : 'text-rose-500'
-  const TrendIcon = isPositiveVariation ? ArrowUpRight : ArrowDownRight
+  let isGood = true
+  if (hasVariation && !isNeutral) {
+    isGood = invertedLogic ? !isPositiveVariation : isPositiveVariation
+  }
+
+  let trendColor = 'text-slate-500'
+  let bgColor = 'bg-slate-100'
+  let TrendIcon = Minus
+
+  if (hasVariation && !isNeutral) {
+    trendColor = isGood ? 'text-emerald-600' : 'text-rose-600'
+    bgColor = isGood ? 'bg-emerald-100' : 'bg-rose-100'
+    TrendIcon = isPositiveVariation ? ArrowUpRight : ArrowDownRight
+  }
 
   const chartConfig = {
     value: {
@@ -87,14 +100,14 @@ export function KpiCard({ data, delay = 0 }: KpiCardProps) {
             <span
               className={cn(
                 'flex items-center bg-opacity-10 px-1.5 py-0.5 rounded-md',
-                isGood ? 'bg-emerald-100' : 'bg-rose-100',
+                bgColor,
                 trendColor,
               )}
             >
               <TrendIcon className="h-3.5 w-3.5 mr-1" strokeWidth={2.5} />
-              {Math.abs(variation).toFixed(1)}%
+              {hasVariation ? `${Math.abs(variation).toFixed(1)}%` : 'N/A'}
             </span>
-            <span className="text-slate-500 ml-2 font-normal">vs. período anterior</span>
+            <span className="text-slate-500 ml-2 font-normal">vs. dia anterior</span>
           </div>
         </div>
 

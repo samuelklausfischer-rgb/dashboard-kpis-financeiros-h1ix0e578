@@ -9,7 +9,7 @@ export type KpiData = {
   description: string
   value: number
   format: 'currency' | 'percent' | 'number'
-  variation: number
-  invertedLogic?: boolean // If true, positive variation is bad (red)
+  variation: number | null
+  invertedLogic?: boolean
   data: DataPoint[]
 }
