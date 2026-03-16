@@ -6,6 +6,8 @@ import Index from '@/pages/Index'
 import NotFound from '@/pages/NotFound'
 import Layout from '@/components/Layout'
 import Login from '@/pages/Login'
+import PerformanceUnidade from '@/pages/PerformanceUnidade'
+import UnidadeDetails from '@/pages/UnidadeDetails'
 import { AuthProvider } from '@/hooks/use-auth'
 import { DateRangeProvider } from '@/contexts/DateRangeContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -22,6 +24,8 @@ const App = () => (
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<Index />} />
+                <Route path="/performance-unidade" element={<PerformanceUnidade />} />
+                <Route path="/unidade/:id" element={<UnidadeDetails />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFound />} />

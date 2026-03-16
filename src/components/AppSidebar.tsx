@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { BarChart3, Settings, Users, Building2, LogOut } from 'lucide-react'
+import { BarChart3, Settings, Users, Building2, LogOut, LayoutList } from 'lucide-react'
 
 import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
@@ -19,7 +19,7 @@ export function AppSidebar() {
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: BarChart3 },
-    { name: 'Unidades', href: '/unidades', icon: Building2 },
+    { name: 'Performance', href: '/performance-unidade', icon: LayoutList },
     { name: 'Usuários', href: '/usuarios', icon: Users },
     { name: 'Configurações', href: '/configuracoes', icon: Settings },
   ]
