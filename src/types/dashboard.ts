@@ -11,5 +11,6 @@ export type KpiData = {
   format: 'currency' | 'percent' | 'number'
   variation: number | null
   invertedLogic?: boolean
+  subtitle?: string
   data: DataPoint[]
 }

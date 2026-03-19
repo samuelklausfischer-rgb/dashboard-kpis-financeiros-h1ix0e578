@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import {
-  Area,
-  AreaChart,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
   XAxis,
@@ -36,7 +36,16 @@ const formatValue = (value: number, format: 'currency' | 'percent' | 'number') =
 }
 
 export function KpiCard({ data, delay = 0 }: KpiCardProps) {
-  const { title, description, value, format, variation, invertedLogic, data: chartData } = data
+  const {
+    title,
+    description,
+    value,
+    format,
+    variation,
+    invertedLogic,
+    subtitle,
+    data: chartData,
+  } = data
 
   const hasVariation = variation !== null
   const isPositiveVariation = hasVariation && variation > 0
@@ -63,9 +72,6 @@ export function KpiCard({ data, delay = 0 }: KpiCardProps) {
       color: 'hsl(var(--primary))',
     },
   }
-
-  // Create a subtle unique ID for the gradient based on the card title
-  const gradientId = useMemo(() => `gradient-${title.replace(/\s+/g, '-').toLowerCase()}`, [title])
 
   return (
     <Card
@@ -97,42 +103,34 @@ export function KpiCard({ data, delay = 0 }: KpiCardProps) {
             {formatValue(value, format)}
           </div>
           <div className="flex items-center mt-2 text-sm font-medium">
-            <span
-              className={cn(
-                'flex items-center bg-opacity-10 px-1.5 py-0.5 rounded-md',
-                bgColor,
-                trendColor,
-              )}
-            >
-              <TrendIcon className="h-3.5 w-3.5 mr-1" strokeWidth={2.5} />
-              {hasVariation ? `${Math.abs(variation).toFixed(1)}%` : 'N/A'}
-            </span>
-            <span className="text-slate-500 ml-2 font-normal">vs. dia anterior</span>
+            {subtitle ? (
+              <span className="text-slate-500">{subtitle}</span>
+            ) : hasVariation ? (
+              <>
+                <span
+                  className={cn(
+                    'flex items-center bg-opacity-10 px-1.5 py-0.5 rounded-md',
+                    bgColor,
+                    trendColor,
+                  )}
+                >
+                  <TrendIcon className="h-3.5 w-3.5 mr-1" strokeWidth={2.5} />
+                  {Math.abs(variation).toFixed(1)}%
+                </span>
+                <span className="text-slate-500 ml-2 font-normal">vs. dia anterior</span>
+              </>
+            ) : (
+              <span className="text-slate-500">Sem dados comparativos</span>
+            )}
           </div>
         </div>
 
         <div className="h-[60px] w-full mt-6 -mx-2 -mb-2">
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor="currentColor"
-                      className="text-blue-600"
-                      stopOpacity={0.2}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="currentColor"
-                      className="text-blue-600"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                </defs>
+              <LineChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
                 <XAxis dataKey="date" hide />
-                <YAxis domain={['dataMin - (dataMin * 0.05)', 'dataMax + (dataMax * 0.05)']} hide />
+                <YAxis domain={['auto', 'auto']} hide />
                 <RechartsTooltip
                   content={
                     <ChartTooltipContent
@@ -153,18 +151,19 @@ export function KpiCard({ data, delay = 0 }: KpiCardProps) {
                     className: 'text-slate-300',
                   }}
                 />
-                <Area
+                <Line
                   type="monotone"
                   dataKey="value"
                   stroke="currentColor"
                   strokeWidth={2}
-                  fill={`url(#${gradientId})`}
+                  dot={false}
+                  activeDot={{ r: 4, strokeWidth: 0, fill: 'currentColor' }}
                   className="text-blue-600"
                   isAnimationActive={true}
                   animationDuration={1500}
                   animationEasing="ease-out"
                 />
-              </AreaChart>
+              </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
         </div>

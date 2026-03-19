@@ -100,39 +100,28 @@ export async function fetchUnidadeDetails(
 
   const unidadeName = unidadeRes.data?.nome || 'Unidade não encontrada'
   const records = kpisRes.data || []
+  const hasData = records.length > 0
 
-  // Sort by date descending to find the most recent entry
-  const sortedRecords = [...records].sort(
-    (a, b) => new Date(b.data).getTime() - new Date(a.data).getTime(),
+  // Calculate the sum of all KPIs over the 30-day period
+  const periodSum = records.reduce(
+    (acc, r) => {
+      acc.faturamento_bruto += Number(r.faturamento_bruto || 0)
+      acc.custos_totais += Number(r.custos_totais || 0)
+      acc.despesas_totais += Number(r.despesas_totais || 0)
+      acc.margem_contribuicao += Number(r.margem_contribuicao || 0)
+      acc.resultado_financeiro += Number(r.resultado_financeiro || 0)
+      acc.ebitda += Number(r.ebitda || 0)
+      return acc
+    },
+    {
+      faturamento_bruto: 0,
+      custos_totais: 0,
+      despesas_totais: 0,
+      margem_contribuicao: 0,
+      resultado_financeiro: 0,
+      ebitda: 0,
+    },
   )
-  const latestRecord = sortedRecords.length > 0 ? sortedRecords[0] : null
-  const hasData = !!latestRecord
-
-  let prevRecord = null
-  if (latestRecord) {
-    // Find the record immediately preceding the latest record chronologically
-    const latestDateStr = latestRecord.data
-    const recordsBeforeLatest = sortedRecords.filter((r) => r.data < latestDateStr)
-    prevRecord = recordsBeforeLatest.length > 0 ? recordsBeforeLatest[0] : null
-  }
-
-  const todayAgg = latestRecord || {
-    faturamento_bruto: 0,
-    custos_totais: 0,
-    despesas_totais: 0,
-    margem_contribuicao: 0,
-    resultado_financeiro: 0,
-    ebitda: 0,
-  }
-
-  const prevAgg = prevRecord || {
-    faturamento_bruto: 0,
-    custos_totais: 0,
-    despesas_totais: 0,
-    margem_contribuicao: 0,
-    resultado_financeiro: 0,
-    ebitda: 0,
-  }
 
   const recordsByDate = records.reduce(
     (acc, r) => {
@@ -154,70 +143,67 @@ export async function fetchUnidadeDetails(
     return result
   }
 
-  const calcVar = (curr: number, prev: number): number | null => {
-    if (!prev || prev === 0) return null
-    return ((curr - prev) / Math.abs(prev)) * 100
-  }
-
   const kpis: KpiData[] = [
     {
       id: 'faturamento',
       title: 'Faturamento Bruto',
-      description: 'Receita total antes de deduções, impostos ou custos.',
-      value: Number(todayAgg.faturamento_bruto),
+      description: 'Soma da receita total nos últimos 30 dias.',
+      value: periodSum.faturamento_bruto,
       format: 'currency',
-      variation: calcVar(Number(todayAgg.faturamento_bruto), Number(prevAgg.faturamento_bruto)),
+      variation: null,
+      subtitle: 'Acumulado de 30 dias',
       data: buildDaily('faturamento_bruto'),
     },
     {
       id: 'custos',
       title: 'Custos Totais',
-      description: 'Custos variáveis diretos atrelados à produção ou prestação de serviços.',
-      value: Number(todayAgg.custos_totais),
+      description: 'Soma dos custos variáveis diretos nos últimos 30 dias.',
+      value: periodSum.custos_totais,
       format: 'currency',
-      variation: calcVar(Number(todayAgg.custos_totais), Number(prevAgg.custos_totais)),
+      variation: null,
       invertedLogic: true,
+      subtitle: 'Acumulado de 30 dias',
       data: buildDaily('custos_totais'),
     },
     {
       id: 'despesas',
       title: 'Despesas Totais',
-      description: 'Despesas operacionais fixas (administrativas, vendas, etc).',
-      value: Number(todayAgg.despesas_totais),
+      description: 'Soma das despesas operacionais fixas nos últimos 30 dias.',
+      value: periodSum.despesas_totais,
       format: 'currency',
-      variation: calcVar(Number(todayAgg.despesas_totais), Number(prevAgg.despesas_totais)),
+      variation: null,
       invertedLogic: true,
+      subtitle: 'Acumulado de 30 dias',
       data: buildDaily('despesas_totais'),
     },
     {
       id: 'margem',
       title: 'Margem de Contribuição',
-      description: 'Lucro bruto menos custos variáveis. Essencial para cobrir despesas fixas.',
-      value: Number(todayAgg.margem_contribuicao),
+      description: 'Soma da margem de contribuição nos últimos 30 dias.',
+      value: periodSum.margem_contribuicao,
       format: 'currency',
-      variation: calcVar(Number(todayAgg.margem_contribuicao), Number(prevAgg.margem_contribuicao)),
+      variation: null,
+      subtitle: 'Acumulado de 30 dias',
       data: buildDaily('margem_contribuicao'),
     },
     {
       id: 'resultado',
       title: 'Resultado Financeiro',
-      description: 'Saldo líquido de receitas e despesas financeiras (juros, rendimentos).',
-      value: Number(todayAgg.resultado_financeiro),
+      description: 'Soma do saldo líquido de receitas e despesas financeiras nos últimos 30 dias.',
+      value: periodSum.resultado_financeiro,
       format: 'currency',
-      variation: calcVar(
-        Number(todayAgg.resultado_financeiro),
-        Number(prevAgg.resultado_financeiro),
-      ),
+      variation: null,
+      subtitle: 'Acumulado de 30 dias',
       data: buildDaily('resultado_financeiro'),
     },
     {
       id: 'ebitda',
       title: 'EBITDA',
-      description:
-        'Lucro antes de juros, impostos, depreciação e amortização. Indica o potencial de geração de caixa.',
-      value: Number(todayAgg.ebitda),
+      description: 'Soma do EBITDA gerado nos últimos 30 dias.',
+      value: periodSum.ebitda,
       format: 'currency',
-      variation: calcVar(Number(todayAgg.ebitda), Number(prevAgg.ebitda)),
+      variation: null,
+      subtitle: 'Acumulado de 30 dias',
       data: buildDaily('ebitda'),
     },
   ]

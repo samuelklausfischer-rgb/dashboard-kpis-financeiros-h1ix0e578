@@ -41,12 +41,11 @@ export default function UnidadeDetails() {
       <div className="flex items-center gap-4">
         <Button
           variant="outline"
-          size="icon"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/performance-unidade')}
           className="text-slate-500 hover:text-slate-900 border-slate-200"
         >
-          <ArrowLeft className="h-4 w-4" />
-          <span className="sr-only">Voltar</span>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar
         </Button>
         <div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
