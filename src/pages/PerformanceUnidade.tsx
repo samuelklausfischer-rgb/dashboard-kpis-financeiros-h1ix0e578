@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Building2 } from 'lucide-react'
+import { Search, Building2, ArrowLeft } from 'lucide-react'
 import { fetchUnidadesPerformance } from '@/services/unidades'
 import { UnidadePerformance } from '@/types/unidades'
 import { useDateRange } from '@/contexts/DateRangeContext'
@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 
 export default function PerformanceUnidade() {
@@ -60,14 +61,35 @@ export default function PerformanceUnidade() {
   }, [data, searchTerm, tipoFilter])
 
   return (
-    <div className="flex flex-col gap-6 max-w-[1400px] mx-auto">
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Performance por Unidade
-        </h2>
-        <p className="text-slate-500 mt-1 text-sm">
-          Analise o desempenho financeiro de todas as unidades de negócio da organização.
-        </p>
+    <div className="flex flex-col gap-6 max-w-[1400px] mx-auto animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center gap-4">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate('/')}
+          className="text-slate-500 hover:text-slate-900 border-slate-200 shrink-0 hidden md:flex"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="sr-only">Voltar para Dashboard</span>
+        </Button>
+        <div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => navigate('/')}
+              className="h-8 w-8 text-slate-500 hover:text-slate-900 border-slate-200 shrink-0 md:hidden"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Performance por Unidade
+            </h2>
+          </div>
+          <p className="text-slate-500 mt-1 text-sm md:ml-0 ml-11 md:block">
+            Analise o desempenho financeiro de todas as unidades de negócio da organização.
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -77,12 +99,12 @@ export default function PerformanceUnidade() {
             placeholder="Buscar unidade por nome..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-9 bg-slate-50/50 focus-visible:bg-white transition-colors"
           />
         </div>
         <div className="w-full sm:w-[220px]">
           <Select value={tipoFilter} onValueChange={setTipoFilter}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-slate-50/50 focus:bg-white transition-colors">
               <SelectValue placeholder="Tipo de Unidade" />
             </SelectTrigger>
             <SelectContent>
@@ -96,27 +118,27 @@ export default function PerformanceUnidade() {
 
       <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50 border-b border-slate-200">
-            <TableRow>
-              <TableHead className="font-semibold text-slate-700 w-[280px]">
+          <TableHeader className="bg-slate-50/80 border-b border-slate-200">
+            <TableRow className="hover:bg-slate-50/80">
+              <TableHead className="font-semibold text-slate-700 w-[280px] h-11">
                 Nome da Unidade
               </TableHead>
-              <TableHead className="text-right font-semibold text-slate-700">
+              <TableHead className="text-right font-semibold text-slate-700 h-11">
                 Faturamento Bruto
               </TableHead>
-              <TableHead className="text-right font-semibold text-slate-700">
+              <TableHead className="text-right font-semibold text-slate-700 h-11">
                 Custos Totais
               </TableHead>
-              <TableHead className="text-right font-semibold text-slate-700">
+              <TableHead className="text-right font-semibold text-slate-700 h-11">
                 Despesas Totais
               </TableHead>
-              <TableHead className="text-right font-semibold text-slate-700">
+              <TableHead className="text-right font-semibold text-slate-700 h-11">
                 Margem de Contribuição
               </TableHead>
-              <TableHead className="text-right font-semibold text-slate-700">
+              <TableHead className="text-right font-semibold text-slate-700 h-11">
                 Resultado Financeiro
               </TableHead>
-              <TableHead className="text-right font-semibold text-slate-700">EBITDA</TableHead>
+              <TableHead className="text-right font-semibold text-slate-700 h-11">EBITDA</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -136,7 +158,7 @@ export default function PerformanceUnidade() {
                   <div className="flex flex-col items-center justify-center text-slate-500">
                     <Building2 className="h-10 w-10 mb-3 text-slate-300" />
                     <p className="text-lg font-medium text-slate-900">Nenhuma unidade encontrada</p>
-                    <p className="text-sm">
+                    <p className="text-sm max-w-sm text-center mt-1 mx-auto">
                       Tente ajustar os filtros de busca para encontrar o que procura ou altere o
                       período no filtro de data.
                     </p>
@@ -147,12 +169,12 @@ export default function PerformanceUnidade() {
               filteredData.map((unidade) => (
                 <TableRow
                   key={unidade.id}
-                  className="cursor-pointer hover:bg-slate-50/80 transition-colors group"
+                  className="cursor-pointer hover:bg-blue-50/50 transition-colors group"
                   onClick={() => navigate(`/unidade/${unidade.id}`)}
                 >
-                  <TableCell className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <TableCell className="font-medium text-slate-900 group-hover:text-blue-700 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100/50 group-hover:bg-blue-600 group-hover:text-white transition-all">
                         <Building2 className="h-4 w-4" />
                       </div>
                       <span className="truncate">{unidade.nome}</span>
@@ -161,16 +183,16 @@ export default function PerformanceUnidade() {
                   <TableCell className="text-right font-medium text-emerald-600">
                     {unidade.kpis ? formatCurrency(unidade.kpis.faturamento_bruto) : '-'}
                   </TableCell>
-                  <TableCell className="text-right text-rose-600">
+                  <TableCell className="text-right text-rose-600 font-medium">
                     {unidade.kpis ? formatCurrency(unidade.kpis.custos_totais) : '-'}
                   </TableCell>
-                  <TableCell className="text-right text-rose-600">
+                  <TableCell className="text-right text-rose-600 font-medium">
                     {unidade.kpis ? formatCurrency(unidade.kpis.despesas_totais) : '-'}
                   </TableCell>
                   <TableCell className="text-right font-medium text-blue-600">
                     {unidade.kpis ? formatCurrency(unidade.kpis.margem_contribuicao) : '-'}
                   </TableCell>
-                  <TableCell className="text-right text-slate-700">
+                  <TableCell className="text-right text-slate-700 font-medium">
                     {unidade.kpis ? formatCurrency(unidade.kpis.resultado_financeiro) : '-'}
                   </TableCell>
                   <TableCell className="text-right font-bold text-slate-900">
