@@ -9,6 +9,7 @@ import Login from '@/pages/Login'
 import PerformanceUnidade from '@/pages/PerformanceUnidade'
 import UnidadeDetails from '@/pages/UnidadeDetails'
 import Configuracoes from '@/pages/Configuracoes'
+import Usuarios from '@/pages/Usuarios'
 import { AuthProvider } from '@/hooks/use-auth'
 import { DateRangeProvider } from '@/contexts/DateRangeContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -27,6 +28,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/performance-unidade" element={<PerformanceUnidade />} />
                 <Route path="/unidade/:id" element={<UnidadeDetails />} />
+                <Route path="/usuarios" element={<Usuarios />} />
                 <Route path="/configuracoes" element={<Configuracoes />} />
               </Route>
             </Route>
